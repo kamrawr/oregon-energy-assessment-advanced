@@ -20,8 +20,7 @@ def process_hvac_assessment(data):
         try:
             cooling_system_age = int(data.get('cooling_system_age').split('-')[-1].replace('+', ''))
             if cooling_system_age > 15:
-                recommendations.append("Your cooling system is over 15 years old. Replacing it with an efficient model could lower your 
-energy bills.")
+                recommendations.append("Your cooling system is over 15 years old. Replacing it with an efficient model could lower your energy bills.")
         except ValueError:
             recommendations.append("Cooling system age information is incomplete.")
     return recommendations
