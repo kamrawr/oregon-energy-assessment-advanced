@@ -1,0 +1,24 @@
+{
+    "form_title": "Insulation Assessment Form",
+    "fields": [
+        {
+            "label": "Attic Insulation Condition",
+            "type": "dropdown",
+            "variable_name": "attic_insulation",
+            "options": ["none", "poor", "fair", "good"]
+        },
+        {
+            "label": "Wall Insulation Condition",
+            "type": "dropdown",
+            "variable_name": "wall_insulation",
+            "options": ["none", "partial", "full"]
+        },
+        {
+            "label": "Crawlspace Insulation Condition",
+            "type": "dropdown",
+            "variable_name": "crawlspace_insulation",
+            "options": ["none", "poor", "fair", "good"]
+        }
+    ]
+}
+
