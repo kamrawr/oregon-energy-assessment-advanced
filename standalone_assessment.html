@@ -83,6 +83,16 @@
           <h2>Property Basics</h2>
           <div class="row">
             <div>
+              <label for="home_square_footage">Home Square Footage</label>
+              <input type="text" id="home_square_footage" placeholder="e.g., 2000">
+            </div>
+            <div>
+              <label for="conditioned_space_sq_ft">Conditioned Space Sq Ft (for HVAC sizing)</label>
+              <input type="text" id="conditioned_space_sq_ft" placeholder="e.g., 1800">
+            </div>
+          </div>
+          <div class="row">
+            <div>
               <label for="housing_type">Housing Type</label>
               <select id="housing_type">
                 <option value="">N/A</option>
@@ -172,6 +182,23 @@
                 <option>excellent</option>
               </select>
             </div>
+          </div>
+          
+          <!-- Dynamic Sizing Inputs -->
+          <div class="row" id="attic_sizing" style="display: none;">
+            <div>
+              <label for="attic_sq_ft">Attic Square Footage</label>
+              <input type="text" id="attic_sq_ft" placeholder="e.g., 1200">
+            </div>
+            <div></div>
+          </div>
+          
+          <div class="row" id="wall_sizing" style="display: none;">
+            <div>
+              <label for="wall_sq_ft">Wall Square Footage</label>
+              <input type="text" id="wall_sq_ft" placeholder="e.g., 2400">
+            </div>
+            <div></div>
           </div>
 
           <div class="row">
@@ -276,6 +303,15 @@
               </select>
             </div>
           </div>
+          
+          <!-- Heat Pump Sizing -->
+          <div class="row" id="heat_pump_sizing" style="display: none;">
+            <div>
+              <label for="heat_pump_units">Number of Heat Pump Units Needed</label>
+              <input type="text" id="heat_pump_units" placeholder="e.g., 3">
+            </div>
+            <div></div>
+          </div>
 
           <div class="actions">
             <button id="analyzeBtn">🔍 Analyze</button>
@@ -291,6 +327,7 @@
             <div class="summary">
               <div class="kpi"><div class="num" id="kpiIssues">0</div><div class="lbl">Potential Issues</div></div>
               <div class="kpi"><div class="num" id="kpiRecs">0</div><div class="lbl">Recommendations</div></div>
+              <div class="kpi"><div class="num" id="kpiIncentives">$0</div><div class="lbl">Energy Trust Incentives</div></div>
               <div class="kpi"><div class="num" id="kpiCompleteness">0%</div><div class="lbl">Form Completeness</div></div>
             </div>
           </div>
@@ -321,7 +358,27 @@
 
   <script>
     function v(id){ return document.getElementById(id).value; }
+    function vNum(id){ const val = v(id); return val ? parseInt(val) || 0 : 0; }
     function set(el, html){ el.innerHTML = html; }
+    
+    // Dynamic form logic
+    function updateDynamicInputs() {
+      const atticInsulation = v('attic_insulation');
+      const wallInsulation = v('wall_insulation');
+      const heatingType = v('heating_type');
+      
+      // Show attic sizing if attic insulation needs work
+      const atticSizing = document.getElementById('attic_sizing');
+      atticSizing.style.display = ['none', 'poor', 'fair'].includes(atticInsulation) ? 'grid' : 'none';
+      
+      // Show wall sizing if wall insulation needs work
+      const wallSizing = document.getElementById('wall_sizing');
+      wallSizing.style.display = ['none', 'partial'].includes(wallInsulation) ? 'grid' : 'none';
+      
+      // Show heat pump sizing if heating type suggests heat pump opportunity
+      const heatPumpSizing = document.getElementById('heat_pump_sizing');
+      heatPumpSizing.style.display = ['electric_resistance', 'none', ''].includes(heatingType) || v('cooling_type') === 'none' ? 'grid' : 'none';
+    }
 
     function fmt(val){ return (val||'').replace(/_/g,' ').replace(/\b\w/g, c=>c.toUpperCase()); }
 
@@ -351,6 +408,34 @@
       return factors;
     }
 
+    function calculateEnergyTrustIncentives(data) {
+      let totalIncentives = 0;
+      const incentives = [];
+      
+      // Attic insulation incentive: $0.15/sq ft
+      if (['none', 'poor', 'fair'].includes(data.attic_insulation) && data.attic_sq_ft > 0) {
+        const incentive = data.attic_sq_ft * 0.15;
+        totalIncentives += incentive;
+        incentives.push(`Attic Insulation: $${incentive.toFixed(0)} (${data.attic_sq_ft} sq ft × $0.15)`);
+      }
+      
+      // Wall insulation incentive: $0.10/sq ft
+      if (['none', 'partial'].includes(data.wall_insulation) && data.wall_sq_ft > 0) {
+        const incentive = data.wall_sq_ft * 0.10;
+        totalIncentives += incentive;
+        incentives.push(`Wall Insulation: $${incentive.toFixed(0)} (${data.wall_sq_ft} sq ft × $0.10)`);
+      }
+      
+      // Heat pump incentive: $500 per unit for existing homes
+      if (['electric_resistance', 'none', ''].includes(data.heating_type) && data.heat_pump_units > 0) {
+        const incentive = data.heat_pump_units * 500;
+        totalIncentives += incentive;
+        incentives.push(`Heat Pump Systems: $${incentive.toFixed(0)} (${data.heat_pump_units} units × $500)`);
+      }
+      
+      return { total: totalIncentives, details: incentives };
+    }
+    
     function analyze(){
       const data = {
         housing_type: v('housing_type'),
@@ -366,7 +451,13 @@
         heating_type: v('heating_type'),
         cooling_type: v('cooling_type'),
         heating_system_age: v('heating_system_age'),
-        cooling_system_age: v('cooling_system_age')
+        cooling_system_age: v('cooling_system_age'),
+        // Sizing data
+        home_square_footage: vNum('home_square_footage'),
+        conditioned_space_sq_ft: vNum('conditioned_space_sq_ft'),
+        attic_sq_ft: vNum('attic_sq_ft'),
+        wall_sq_ft: vNum('wall_sq_ft'),
+        heat_pump_units: vNum('heat_pump_units')
       };
 
       const recs = [];
@@ -378,12 +469,21 @@
       if (data.health_safety.includes('asbestos_suspected')) addRec(recs, 'Consult a qualified professional to test/remediate suspected asbestos prior to disturbance.', '⚠️');
       if (data.health_safety.includes('lead_paint_suspected')) addRec(recs, 'Test for lead paint before renovation; follow EPA RRP rules if present.', '⚠️');
 
+      // Calculate Energy Trust incentives
+      const energyTrustIncentives = calculateEnergyTrustIncentives(data);
+      
       // Envelope
       if (data.attic_insulation === '' ) addRec(recs, 'Attic insulation unknown—consider inspection; upgrading to current R-values often yields top ROI.', '❔');
-      else if (['none','poor','fair'].includes(data.attic_insulation)) addRec(recs, 'Upgrade attic insulation and air sealing to reduce heat loss/gain.');
+      else if (['none','poor','fair'].includes(data.attic_insulation)) {
+        const incentiveText = data.attic_sq_ft > 0 ? ` Energy Trust incentive: $${(data.attic_sq_ft * 0.15).toFixed(0)}` : '';
+        addRec(recs, `Upgrade attic insulation and air sealing to reduce heat loss/gain.${incentiveText}`);
+      }
 
       if (data.wall_insulation === '') addRec(recs, 'Wall insulation unknown—dense-pack or cavity check could offer big comfort and savings.', '❔');
-      else if (data.wall_insulation === 'none') addRec(recs, 'Add wall insulation (dense-pack cellulose or foam) for significant efficiency gains.');
+      else if (data.wall_insulation === 'none') {
+        const incentiveText = data.wall_sq_ft > 0 ? ` Energy Trust incentive: $${(data.wall_sq_ft * 0.10).toFixed(0)}` : '';
+        addRec(recs, `Add wall insulation (dense-pack cellulose or foam) for significant efficiency gains.${incentiveText}`);
+      }
 
       if (data.foundation_type.includes('basement') && data.crawlspace_insulation === '') addRec(recs, 'Basement/crawl insulation unknown—inspect rim joists and foundation walls for opportunities.', '❔');
       if (['none','poor'].includes(data.crawlspace_insulation)) addRec(recs, 'Improve crawlspace/basement insulation and consider air sealing/encapsulation.');
@@ -408,7 +508,10 @@
 
       // Heating
       if (data.heating_type === '') addRec(recs, 'Heating system unknown—assessment could identify upgrade options such as heat pumps or condensing systems.', '❔');
-      else if (data.heating_type === 'electric_resistance') addRec(recs, 'Replace electric resistance heat with a cold-climate heat pump for major savings.');
+      else if (data.heating_type === 'electric_resistance') {
+        const incentiveText = data.heat_pump_units > 0 ? ` Energy Trust incentive: $${(data.heat_pump_units * 500).toFixed(0)}` : '';
+        addRec(recs, `Replace electric resistance heat with a cold-climate heat pump for major savings.${incentiveText}`);
+      }
       else if (heatingOld && data.heating_type !== 'heat_pump') addRec(recs, 'Heating system appears old—upgrade to a modern high-efficiency heat pump or high-efficiency furnace/boiler.');
 
       // Ductwork (may not exist)
@@ -456,6 +559,7 @@
       // KPIs
       document.getElementById('kpiIssues').textContent = issueCount;
       document.getElementById('kpiRecs').textContent = recs.length;
+      document.getElementById('kpiIncentives').textContent = '$' + energyTrustIncentives.total.toFixed(0);
       document.getElementById('kpiCompleteness').textContent = completeness(data) + '%';
 
       // Badges
@@ -522,6 +626,14 @@
       });
     });
 
+    // Add event listeners for dynamic updates
+    ['attic_insulation', 'wall_insulation', 'heating_type', 'cooling_type'].forEach(id => {
+      document.getElementById(id).addEventListener('change', updateDynamicInputs);
+    });
+    
+    // Initialize dynamic inputs on page load
+    updateDynamicInputs();
+    
     document.getElementById('analyzeBtn').addEventListener('click', analyze);
     document.getElementById('downloadBtn').addEventListener('click', downloadReport);
     document.getElementById('downloadBtn2').addEventListener('click', downloadReport);

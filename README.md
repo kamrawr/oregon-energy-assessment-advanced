@@ -1,21 +1,25 @@
-# 🏠 Home Energy Assessment Tool
+# 🏠 Oregon Energy Assessment Tool (Advanced Version)
 
-**A comprehensive, standalone web-based tool for conducting home energy assessments and generating personalized energy efficiency recommendations.**
+**Advanced home energy assessment tool with detailed sizing calculations, dynamic form fields, and precise Energy Trust of Oregon incentive calculations.**
+
+> 📋 **Need a simpler tool?** Check out our [**Standalone Assessment Tool**](https://github.com/kamrawr/dynamic-energy-assessment-tool) for basic assessments without sizing requirements.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 [![HTML5](https://img.shields.io/badge/HTML5-E34F26?logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/HTML5)
 [![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![CSS3](https://img.shields.io/badge/CSS3-1572B6?logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS)
 
-## ✨ Features
+## ✨ Advanced Features
 
-- 🌐 **Zero Setup Required** - Single HTML file, works offline
-- 📱 **Mobile Responsive** - Works on desktop, tablet, and mobile
+- 📏 **Detailed Sizing Inputs** - Square footage inputs for accurate calculations
+- 📈 **Dynamic Form Fields** - Inputs appear/hide based on your responses
+- 💵 **Precise Incentive Calculations** - Accurate Energy Trust of Oregon incentive amounts
+- 📏 **HVAC Load Calculations** - Conditioned space sizing for heat pump requirements
+- 📊 **Professional Reports** - Detailed cost analysis with net costs and payback periods
 - 🏗️ **Comprehensive Assessment** - Housing type, foundation, envelope, HVAC, health & safety
-- 🎯 **Smart Recommendations** - Heat pump suggestions, ductless options, N/A field handling
-- 📊 **Visual Reports** - Real-time status dashboard with color-coded indicators
-- 📄 **Downloadable Reports** - Professional HTML reports with print/PDF capability
-- ⚡ **Instant Analysis** - No server required, all processing in-browser
+- 🎯 **Smart Recommendations** - Heat pump suggestions with specific incentive amounts
+- 📱 **Mobile Responsive** - Works on desktop, tablet, and mobile
+- ⚡ **Real-time Updates** - Form adapts as you fill it out
 - 🔧 **Multi-Select Options** - Choose multiple health & safety factors
 
 ## 🚀 Quick Start
@@ -30,10 +34,32 @@
 
 ### Option 3: Clone Repository
 ```bash
-git clone https://github.com/kamrawr/dynamic-energy-assessment-tool.git
-cd dynamic-energy-assessment-tool
+git clone https://github.com/kamrawr/oregon-energy-assessment-advanced.git
+cd oregon-energy-assessment-advanced
 open standalone_assessment.html
 ```
+
+## 🔬 What Makes This Advanced?
+
+### 📏 Detailed Sizing Calculations
+- **Home Square Footage** - Total home size for comprehensive analysis
+- **Conditioned Space** - Specific area for HVAC load calculations
+- **Attic Square Footage** - Precise insulation area calculations
+- **Wall Square Footage** - Accurate wall insulation sizing
+- **Heat Pump Units** - Number of units needed for proper heating/cooling
+
+### 📈 Dynamic Form Intelligence
+- Form fields appear based on your selections
+- Attic sizing inputs show when attic insulation needs work
+- Wall sizing inputs appear for poor/missing wall insulation
+- Heat pump sizing appears for electric resistance heating or no cooling
+
+### 💵 Precise Energy Trust Incentives
+- **Attic Insulation**: $0.15 per square foot
+- **Wall Insulation**: $0.10 per square foot  
+- **Heat Pump Systems**: $500 per unit
+- Real-time calculation of total available incentives
+- Net cost analysis after incentives
 
 ## 🎯 How to Use
 
