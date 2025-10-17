@@ -1,31 +1,57 @@
 # services/report_generator.py
+import os
+import json
+from datetime import datetime
+from jinja2 import Template
 
-def generate_html_report(report_content):
+def generate_report(data, recommendations):
     """
-    Generates an HTML report from the given report content.
+    Generate an HTML report based on assessment data and recommendations
     
-    :param report_content: Dictionary containing form data and recommendations
+    :param data: Dictionary containing form data
+    :param recommendations: List of recommendations
+    :return: Path to generated report file
     """
-    html_content = f"""
-    <html>
-    <head>
-        <title>Energy Assessment Report</title>
-    </head>
-    <body>
-        <h1>Energy Assessment Report for {report_content['data'].get('address')}</h1>
-        <h2>General Information</h2>
-        <p>Date: {report_content['data'].get('sited_date')}</p>
-        <h2>Recommendations</h2>
-        <ul>
-    """
-    for recommendation in report_content['recommendations']:
-        html_content += f"<li>{recommendation}</li>\n"
+    try:
+        # Load template
+        template_path = os.path.join('templates', 'report_template.html')
+        with open(template_path, 'r') as f:
+            template_content = f.read()
+        
+        template = Template(template_content)
+        
+        # Prepare data for template
+        report_data = {
+            'assessment_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'data': data,
+            'recommendations': recommendations,
+            'total_recommendations': len(recommendations)
+        }
+        
+        # Generate report
+        html_content = template.render(**report_data)
+        
+        # Save report
+        os.makedirs('reports', exist_ok=True)
+        report_filename = f"energy_assessment_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.html"
+        report_path = os.path.join('reports', report_filename)
+        
+        with open(report_path, 'w') as f:
+            f.write(html_content)
+        
+        return report_path
+        
+    except Exception as e:
+        print(f"Error generating report: {e}")
+        return None
 
-    html_content += """
-        </ul>
-    </body>
-    </html>
+def generate_pdf_report(data, recommendations):
     """
-    with open('energy_assessment_report.html', 'w') as report_file:
-        report_file.write(html_content)
-    print("Report generated and saved as 'energy_assessment_report.html'")
+    Generate a PDF report (future enhancement)
+    
+    :param data: Dictionary containing form data
+    :param recommendations: List of recommendations
+    :return: Path to generated PDF report
+    """
+    # TODO: Implement PDF generation using reportlab
+    pass
