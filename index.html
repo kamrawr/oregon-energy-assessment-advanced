@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home Energy Assessment Tool</title>
+    <meta http-equiv="refresh" content="0;url=./standalone_assessment.html">
+    <link rel="canonical" href="./standalone_assessment.html">
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+        }
+        .container {
+            max-width: 500px;
+            padding: 2rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        h1 { margin: 0 0 1rem; font-size: 2rem; }
+        p { margin: 0 0 1.5rem; opacity: 0.9; }
+        a {
+            display: inline-block;
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            border: 2px solid rgba(255,255,255,0.3);
+            transition: all 0.3s ease;
+        }
+        a:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏠 Home Energy Assessment Tool</h1>
+        <p>Redirecting you to the assessment tool...</p>
+        <p>If you're not automatically redirected:</p>
+        <a href="./standalone_assessment.html">Open Assessment Tool →</a>
+    </div>
+
+    <script>
+        // Backup redirect in case meta refresh doesn't work
+        setTimeout(() => {
+            window.location.href = './standalone_assessment.html';
+        }, 1000);
+    </script>
+</body>
+</html>
