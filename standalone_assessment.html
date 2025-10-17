@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home Energy Assessment (Standalone)</title>
+  <style>
+    :root {
+      --brand: #2c5530;
+      --brand-2: #5cb85c;
+      --accent: #17a2b8;
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #2e2e2e;
+      --muted: #6b7280;
+      --bad: #dc3545;
+      --warn: #fd7e14;
+      --good: #28a745;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji', 'Segoe UI Emoji'; color: var(--text); background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); }
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+    .app { background: var(--card); border-radius: 16px; box-shadow: 0 16px 40px rgba(0,0,0,.12); overflow: hidden; }
+    .header { background: linear-gradient(135deg,var(--brand) 0%,var(--brand-2) 100%); color:#fff; padding: 32px 24px; text-align: center; }
+    .header h1 { margin: 0 0 8px; font-weight: 600; letter-spacing:.2px; }
+    .header p { margin: 0; opacity:.9; }
+    .content { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 24px; }
+    @media (max-width: 900px) { .content { grid-template-columns: 1fr; } }
+    .card { background: var(--card); border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; }
+    .card h2 { margin:0 0 12px; font-size: 18px; color: var(--brand); }
+    .row { display:grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 600px) { .row { grid-template-columns: 1fr; } }
+    label { display:block; font-size: 14px; font-weight: 600; margin: 8px 0 6px; color: var(--brand); }
+    select, input[type="text"], textarea { width:100%; padding:12px 12px; border:2px solid #e5e7eb; border-radius:8px; background:#f9fafb; font-size:14px; outline:none; transition:.2s; }
+    select:focus, input[type="text"]:focus, textarea:focus { background:#fff; border-color: var(--brand-2); box-shadow:0 0 0 3px rgba(92,184,92,.12); }
+    .actions { margin-top: 12px; display:flex; gap: 12px; flex-wrap: wrap; }
+    button, .btn { appearance:none; border:none; background: linear-gradient(135deg,var(--brand-2), var(--brand)); color:#fff; padding:12px 18px; border-radius: 999px; font-weight:700; cursor:pointer; box-shadow: 0 8px 20px rgba(92,184,92,.28); transition: transform .1s; }
+    button:hover, .btn:hover { transform: translateY(-1px); }
+    .btn-secondary { background: linear-gradient(135deg, var(--accent), #0f8fa2); box-shadow: 0 8px 20px rgba(23,162,184,.28); }
+    .btn-muted { background: #e5e7eb; color:#111827; box-shadow:none; }
+
+    /* Results */
+    .results { display:none; grid-column: 1 / -1; }
+    .badges { display:flex; gap:8px; flex-wrap:wrap; margin: 6px 0 14px; }
+    .badge { padding:6px 10px; border-radius:999px; font-size:12px; background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; }
+    .summary { display:grid; grid-template-columns: repeat(3,1fr); gap:16px; }
+    @media (max-width:700px) { .summary { grid-template-columns: 1fr; } }
+    .kpi { background:#f8fafc; border:1px solid #e5e7eb; border-radius:12px; padding:16px; text-align:center; }
+    .kpi .num { font-size:28px; font-weight:800; color: var(--brand-2); }
+    .kpi .lbl { color: var(--muted); font-size:12px; letter-spacing:.4px; text-transform: uppercase; }
+
+    .recommendations { margin-top: 14px; }
+    .rec { background:#fff; border:1px solid #e5e7eb; border-left: 6px solid var(--brand-2); border-radius:8px; padding:12px 14px; margin:10px 0; display:flex; gap:10px; align-items:flex-start; box-shadow:0 2px 6px rgba(0,0,0,.06); }
+    .rec .icon { font-size:18px; }
+    .rec .text { font-size:14px; }
+
+    .status { margin-top: 14px; display:grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 900px) { .status { grid-template-columns: 1fr; } }
+    .status-item { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:14px; }
+    .status-item h3 { margin: 0 0 10px; font-size:16px; color: var(--brand); }
+    .list { display:grid; gap:8px; }
+    .pill { display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-radius:10px; background:#f9fafb; border:1px solid #eef2f7; }
+    .pill .label { color:#374151; font-weight:600; }
+    .pill .value { font-weight:700; }
+    .bad { color: var(--bad); }
+    .warn { color: var(--warn); }
+    .good { color: var(--good); }
+
+    .footer-actions { margin-top: 16px; display:flex; gap: 10px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="app">
+      <div class="header">
+        <h1>🏠 Home Energy Assessment</h1>
+        <p>Fill in what you know. Use N/A where unknown—we'll guide you.</p>
+      </div>
+
+      <div class="content">
+        <!-- Form -->
+        <div class="card">
+          <h2>Property Basics</h2>
+          <div class="row">
+            <div>
+              <label for="housing_type">Housing Type</label>
+              <select id="housing_type">
+                <option value="">N/A</option>
+                <option>single_family</option>
+                <option>multi_family</option>
+                <option>townhome</option>
+                <option>manufactured</option>
+                <option>condo</option>
+              </select>
+            </div>
+            <div>
+              <label for="foundation_type">Foundation Type</label>
+              <select id="foundation_type">
+                <option value="">N/A</option>
+                <option>slab</option>
+                <option>crawlspace</option>
+                <option>basement_unfinished</option>
+                <option>basement_finished</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="roof_condition">Roof Condition</label>
+              <select id="roof_condition">
+                <option value="">N/A</option>
+                <option>poor</option>
+                <option>fair</option>
+                <option>good</option>
+                <option>excellent</option>
+              </select>
+            </div>
+            <div>
+              <label>Health & Safety Factors (check all that apply)</label>
+              <div style="display: grid; gap: 8px; margin-top: 8px;">
+                <label style="font-weight: 400; display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="combustion_appliances" style="width: auto;">
+                  Combustion Appliances Present
+                </label>
+                <label style="font-weight: 400; display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="moisture_issues" style="width: auto;">
+                  Moisture/Water Issues
+                </label>
+                <label style="font-weight: 400; display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="mold_visible" style="width: auto;">
+                  Visible Mold
+                </label>
+                <label style="font-weight: 400; display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="asbestos_suspected" style="width: auto;">
+                  Suspected Asbestos
+                </label>
+                <label style="font-weight: 400; display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="lead_paint_suspected" style="width: auto;">
+                  Suspected Lead Paint
+                </label>
+                <label style="font-weight: 400; display: flex; align-items: center; gap: 8px;">
+                  <input type="checkbox" id="no_health_safety_issues" style="width: auto;">
+                  No Known Health/Safety Issues
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Envelope & Systems</h2>
+          <div class="row">
+            <div>
+              <label for="attic_insulation">Attic Insulation</label>
+              <select id="attic_insulation">
+                <option value="">N/A</option>
+                <option>none</option>
+                <option>poor</option>
+                <option>fair</option>
+                <option>good</option>
+                <option>excellent</option>
+              </select>
+            </div>
+            <div>
+              <label for="wall_insulation">Wall Insulation</label>
+              <select id="wall_insulation">
+                <option value="">N/A</option>
+                <option>none</option>
+                <option>partial</option>
+                <option>full</option>
+                <option>excellent</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="crawlspace_insulation">Crawlspace Insulation</label>
+              <select id="crawlspace_insulation">
+                <option value="">N/A</option>
+                <option>none</option>
+                <option>poor</option>
+                <option>fair</option>
+                <option>good</option>
+                <option>excellent</option>
+              </select>
+            </div>
+            <div>
+              <label for="ductwork_condition">Ductwork Condition</label>
+              <select id="ductwork_condition">
+                <option value="">N/A</option>
+                <option>no_ducts</option>
+                <option>poor</option>
+                <option>fair</option>
+                <option>good</option>
+                <option>excellent</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="window_type">Window Type</label>
+              <select id="window_type">
+                <option value="">N/A</option>
+                <option>single_pane</option>
+                <option>double_pane_old</option>
+                <option>double_pane_new</option>
+                <option>triple_pane</option>
+              </select>
+            </div>
+            <div>
+              <label for="door_sealing">Door Sealing</label>
+              <select id="door_sealing">
+                <option value="">N/A</option>
+                <option>poor</option>
+                <option>fair</option>
+                <option>good</option>
+                <option>excellent</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="grid-column:1/-1">
+          <h2>HVAC & Equipment</h2>
+          <div class="row">
+            <div>
+              <label for="heating_type">Primary Heating Type</label>
+              <select id="heating_type">
+                <option value="">N/A</option>
+                <option>gas_furnace</option>
+                <option>oil_furnace</option>
+                <option>electric_resistance</option>
+                <option>heat_pump</option>
+                <option>boiler_radiators</option>
+                <option>wood_pellet</option>
+                <option>none</option>
+              </select>
+            </div>
+            <div>
+              <label for="cooling_type">Cooling Type</label>
+              <select id="cooling_type">
+                <option value="">N/A</option>
+                <option>central_ac</option>
+                <option>window_units</option>
+                <option>mini_split</option>
+                <option>evaporative_cooler</option>
+                <option>none</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="heating_system_age">Heating System Age</label>
+              <select id="heating_system_age">
+                <option value="">N/A</option>
+                <option>0-5</option>
+                <option>5-10</option>
+                <option>10-15</option>
+                <option>15-20</option>
+                <option>20+</option>
+              </select>
+            </div>
+            <div>
+              <label for="cooling_system_age">Cooling System Age</label>
+              <select id="cooling_system_age">
+                <option value="">N/A</option>
+                <option>0-5</option>
+                <option>5-10</option>
+                <option>10-15</option>
+                <option>15-20</option>
+                <option>20+</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="analyzeBtn">🔍 Analyze</button>
+            <button class="btn btn-secondary" id="downloadBtn" disabled>📄 Download Report</button>
+            <button class="btn btn-muted" id="printBtn" disabled>🖨️ Print / Save PDF</button>
+          </div>
+        </div>
+
+        <!-- Results / Report -->
+        <div class="results" id="results">
+          <div class="card">
+            <div class="badges" id="badges"></div>
+            <div class="summary">
+              <div class="kpi"><div class="num" id="kpiIssues">0</div><div class="lbl">Potential Issues</div></div>
+              <div class="kpi"><div class="num" id="kpiRecs">0</div><div class="lbl">Recommendations</div></div>
+              <div class="kpi"><div class="num" id="kpiCompleteness">0%</div><div class="lbl">Form Completeness</div></div>
+            </div>
+          </div>
+
+          <div class="status">
+            <div class="status-item">
+              <h3>Envelope Status</h3>
+              <div class="list" id="envelopeList"></div>
+            </div>
+            <div class="status-item">
+              <h3>Systems Status</h3>
+              <div class="list" id="systemsList"></div>
+            </div>
+          </div>
+
+          <div class="card recommendations">
+            <h2>Personalized Recommendations</h2>
+            <div id="recs"></div>
+            <div class="footer-actions">
+              <button class="btn btn-secondary" id="downloadBtn2">📄 Download Report</button>
+              <button class="btn btn-muted" id="printBtn2">🖨️ Print / Save PDF</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function v(id){ return document.getElementById(id).value; }
+    function set(el, html){ el.innerHTML = html; }
+
+    function fmt(val){ return (val||'').replace(/_/g,' ').replace(/\b\w/g, c=>c.toUpperCase()); }
+
+    function completeness(data){
+      const keys = Object.keys(data);
+      const filled = keys.filter(k => data[k] !== '').length;
+      return Math.round((filled / keys.length) * 100);
+    }
+
+    function pill(label, value){
+      let cls = 'good';
+      if (["none","poor","no_ducts"].includes(value)) cls = 'bad';
+      else if (["fair","partial"].includes(value)) cls = 'warn';
+      return `<div class="pill"><span class="label">${fmt(label)}</span><span class="value ${cls}">${value?fmt(value):'N/A'}</span></div>`;
+    }
+
+    function addRec(list, text, icon='💡'){ list.push({icon, text}); }
+
+    function getHealthSafetyFactors(){
+      const factors = [];
+      if (document.getElementById('combustion_appliances').checked) factors.push('combustion_appliances');
+      if (document.getElementById('moisture_issues').checked) factors.push('moisture_issues');
+      if (document.getElementById('mold_visible').checked) factors.push('mold_visible');
+      if (document.getElementById('asbestos_suspected').checked) factors.push('asbestos_suspected');
+      if (document.getElementById('lead_paint_suspected').checked) factors.push('lead_paint_suspected');
+      if (document.getElementById('no_health_safety_issues').checked) factors.push('none');
+      return factors;
+    }
+
+    function analyze(){
+      const data = {
+        housing_type: v('housing_type'),
+        foundation_type: v('foundation_type'),
+        roof_condition: v('roof_condition'),
+        health_safety: getHealthSafetyFactors(),
+        attic_insulation: v('attic_insulation'),
+        wall_insulation: v('wall_insulation'),
+        crawlspace_insulation: v('crawlspace_insulation'),
+        ductwork_condition: v('ductwork_condition'),
+        window_type: v('window_type'),
+        door_sealing: v('door_sealing'),
+        heating_type: v('heating_type'),
+        cooling_type: v('cooling_type'),
+        heating_system_age: v('heating_system_age'),
+        cooling_system_age: v('cooling_system_age')
+      };
+
+      const recs = [];
+      const issues = [];
+
+      // Health & Safety first (multiple factors possible)
+      if (data.health_safety.includes('combustion_appliances')) addRec(recs, 'Perform combustion safety testing (CO spillage/backdraft) before air sealing or adding insulation.', '⚠️');
+      if (data.health_safety.includes('moisture_issues') || data.health_safety.includes('mold_visible')) addRec(recs, 'Address moisture intrusion and fix leaks before insulation or HVAC upgrades.', '⚠️');
+      if (data.health_safety.includes('asbestos_suspected')) addRec(recs, 'Consult a qualified professional to test/remediate suspected asbestos prior to disturbance.', '⚠️');
+      if (data.health_safety.includes('lead_paint_suspected')) addRec(recs, 'Test for lead paint before renovation; follow EPA RRP rules if present.', '⚠️');
+
+      // Envelope
+      if (data.attic_insulation === '' ) addRec(recs, 'Attic insulation unknown—consider inspection; upgrading to current R-values often yields top ROI.', '❔');
+      else if (['none','poor','fair'].includes(data.attic_insulation)) addRec(recs, 'Upgrade attic insulation and air sealing to reduce heat loss/gain.');
+
+      if (data.wall_insulation === '') addRec(recs, 'Wall insulation unknown—dense-pack or cavity check could offer big comfort and savings.', '❔');
+      else if (data.wall_insulation === 'none') addRec(recs, 'Add wall insulation (dense-pack cellulose or foam) for significant efficiency gains.');
+
+      if (data.foundation_type.includes('basement') && data.crawlspace_insulation === '') addRec(recs, 'Basement/crawl insulation unknown—inspect rim joists and foundation walls for opportunities.', '❔');
+      if (['none','poor'].includes(data.crawlspace_insulation)) addRec(recs, 'Improve crawlspace/basement insulation and consider air sealing/encapsulation.');
+
+      if (data.window_type === '') addRec(recs, 'Window type unknown—check for single-pane or failed seals; low-cost storm windows/films can help.', '❔');
+      else if (data.window_type === 'single_pane') addRec(recs, 'Upgrade single-pane windows to ENERGY STAR double/triple-pane or add quality storm windows.');
+
+      if (data.door_sealing === '' ) addRec(recs, 'Door sealing unknown—inspect weatherstripping and thresholds for leaks.', '❔');
+      else if (data.door_sealing === 'poor') addRec(recs, 'Install/replace weatherstripping and door sweeps to reduce infiltration.');
+
+      // Roof
+      if (data.roof_condition === '') addRec(recs, 'Roof condition unknown—inspect for ventilation and integrity; coordinate with attic upgrades.', '❔');
+      else if (data.roof_condition === 'poor') addRec(recs, 'Address roof issues (leaks/ventilation) before interior energy upgrades.');
+
+      // HVAC - cooling -> heat pump consideration
+      const coolingOld = ['15-20','20+'].includes(data.cooling_system_age);
+      const heatingOld = ['15-20','20+'].includes(data.heating_system_age);
+
+      if (data.cooling_type === '' ) addRec(recs, 'Cooling system unknown—if adding cooling, a high-efficiency heat pump can provide both cooling and heating.', '❔');
+      else if (data.cooling_type === 'none') addRec(recs, 'If cooling is desired, consider a high-efficiency heat pump which also provides heating.');
+      else if (coolingOld) addRec(recs, 'Cooling system appears old—replace with a high-efficiency heat pump to reduce energy use and add heating capability.');
+
+      // Heating
+      if (data.heating_type === '') addRec(recs, 'Heating system unknown—assessment could identify upgrade options such as heat pumps or condensing systems.', '❔');
+      else if (data.heating_type === 'electric_resistance') addRec(recs, 'Replace electric resistance heat with a cold-climate heat pump for major savings.');
+      else if (heatingOld && data.heating_type !== 'heat_pump') addRec(recs, 'Heating system appears old—upgrade to a modern high-efficiency heat pump or high-efficiency furnace/boiler.');
+
+      // Ductwork (may not exist)
+      if (data.ductwork_condition === '') addRec(recs, 'Ductwork unknown—inspect for leaks and insulation; if none exists, a ductless mini-split heat pump is an option.', '❔');
+      else if (data.ductwork_condition === 'no_ducts') addRec(recs, 'No ductwork—consider ductless mini-split heat pumps for zoned comfort.');
+      else if (['poor','fair'].includes(data.ductwork_condition)) addRec(recs, 'Seal and insulate ducts, especially in unconditioned spaces, to improve efficiency.');
+
+      // Cross-logic: when cooling recommendation happens and heating type is not set or poor
+      if ((data.cooling_type === 'none' || coolingOld) && (data.heating_type === '' || data.heating_type === 'electric_resistance')) {
+        addRec(recs, 'A single high-efficiency heat pump can replace/augment existing heat and add cooling in one step.');
+      }
+
+      // High-level badges / issues
+      const badKeys = ['attic_insulation','wall_insulation','crawlspace_insulation','window_type','door_sealing','ductwork_condition','roof_condition'];
+      const issueCount = badKeys.reduce((n,k)=>{
+        const val = data[k];
+        if (['none','poor','single_pane','no_ducts'].includes(val)) return n+1;
+        return n;
+      },0);
+
+      // Status lists
+      const envelopeList = document.getElementById('envelopeList');
+      const systemsList = document.getElementById('systemsList');
+      set(envelopeList, [
+        pill('Attic Insulation', data.attic_insulation),
+        pill('Wall Insulation', data.wall_insulation),
+        pill('Crawlspace Insulation', data.crawlspace_insulation),
+        pill('Window Type', data.window_type),
+        pill('Door Sealing', data.door_sealing),
+        pill('Roof Condition', data.roof_condition)
+      ].join(''));
+
+      const healthSafetyDisplay = data.health_safety.length === 0 ? 'N/A' : 
+        data.health_safety.includes('none') ? 'None' : data.health_safety.map(fmt).join(', ');
+      
+      set(systemsList, [
+        pill('Heating Type', data.heating_type),
+        pill('Heating System Age', data.heating_system_age),
+        pill('Cooling Type', data.cooling_type),
+        pill('Cooling System Age', data.cooling_system_age),
+        pill('Ductwork Condition', data.ductwork_condition),
+        `<div class="pill"><span class="label">Health & Safety</span><span class="value ${data.health_safety.length > 0 && !data.health_safety.includes('none') ? 'warn' : 'good'}">${healthSafetyDisplay}</span></div>`
+      ].join(''));
+
+      // KPIs
+      document.getElementById('kpiIssues').textContent = issueCount;
+      document.getElementById('kpiRecs').textContent = recs.length;
+      document.getElementById('kpiCompleteness').textContent = completeness(data) + '%';
+
+      // Badges
+      const badges = document.getElementById('badges');
+      const b = [];
+      if (issueCount >= 3) b.push('<span class="badge">Comprehensive Audit Recommended</span>');
+      if (data.health_safety.length > 0 && !data.health_safety.includes('none')) b.push('<span class="badge">Health & Safety First</span>');
+      if (data.heating_type === 'electric_resistance' || data.cooling_type === 'none') b.push('<span class="badge">Heat Pump Opportunity</span>');
+      set(badges, b.join(''));
+
+      // Recs rendering
+      const recsEl = document.getElementById('recs');
+      set(recsEl, recs.map(r=>`<div class="rec"><div class="icon">${r.icon}</div><div class="text">${r.text}</div></div>`).join(''));
+
+      // Show results and enable buttons
+      document.getElementById('results').style.display = 'block';
+      document.getElementById('downloadBtn').disabled = false;
+      document.getElementById('printBtn').disabled = false;
+    }
+
+    function buildReportHTML(){
+      // Package the current DOM results into a standalone HTML for download
+      const title = 'Home Energy Assessment Report';
+      const stamp = new Date().toISOString().slice(0,19).replace('T',' ');
+      const resultsHTML = document.getElementById('results').innerHTML;
+      return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style> body{font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial; background:#f5f7fb; color:#111827; padding:24px;} .wrap{max-width:900px;margin:0 auto;background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.08);} .head{background:linear-gradient(135deg,#2c5530,#5cb85c);color:#fff;padding:24px;border-radius:12px 12px 0 0;} .head h1{margin:0 0 6px;} .body{padding:20px;} .rec{border-left:6px solid #5cb85c;} .pill{background:#f9fafb;border:1px solid #eef2f7;border-radius:10px;padding:10px 12px;margin:6px 0;display:flex;justify-content:space-between} .label{font-weight:700;color:#374151} .value{font-weight:700} .good{color:#28a745}.warn{color:#fd7e14}.bad{color:#dc3545} .kpi{background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:16px;text-align:center} .summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px} @media(max-width:700px){.summary{grid-template-columns:1fr}} .badge{padding:6px 10px;border-radius:999px;font-size:12px;background:#eef2ff;color:#3730a3;border:1px solid #c7d2fe;margin-right:6px} </style>
+      </head><body>
+        <div class="wrap">
+          <div class="head"><h1>🏠 ${title}</h1><div>Generated: ${stamp}</div></div>
+          <div class="body">${resultsHTML}</div>
+        </div>
+      </body></html>`;
+    }
+
+    function downloadReport(){
+      const html = buildReportHTML();
+      const blob = new Blob([html], {type: 'text/html'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'energy_assessment_report.html';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    // Handle conflicting health & safety selections
+    document.getElementById('no_health_safety_issues').addEventListener('change', function(){
+      if (this.checked) {
+        ['combustion_appliances', 'moisture_issues', 'mold_visible', 'asbestos_suspected', 'lead_paint_suspected'].forEach(id => {
+          document.getElementById(id).checked = false;
+        });
+      }
+    });
+    
+    ['combustion_appliances', 'moisture_issues', 'mold_visible', 'asbestos_suspected', 'lead_paint_suspected'].forEach(id => {
+      document.getElementById(id).addEventListener('change', function(){
+        if (this.checked) {
+          document.getElementById('no_health_safety_issues').checked = false;
+        }
+      });
+    });
+
+    document.getElementById('analyzeBtn').addEventListener('click', analyze);
+    document.getElementById('downloadBtn').addEventListener('click', downloadReport);
+    document.getElementById('downloadBtn2').addEventListener('click', downloadReport);
+    document.getElementById('printBtn').addEventListener('click', ()=> window.print());
+    document.getElementById('printBtn2').addEventListener('click', ()=> window.print());
+  </script>
+</body>
+</html>
